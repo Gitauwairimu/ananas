@@ -38,9 +38,12 @@ A Django application designed to manage funeral welfare services for the Ananas 
 A virtual environment isolates project dependencies, preventing conflicts with system-wide packages. Here's an example using venv:
 Bash
 
+   ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate.bat  # Windows
+
+```
 
 Use code with caution.
 
