@@ -1,35 +1,39 @@
-Ananas Funeral Welfare System
+# Ananas Funeral Welfare System
 
 A Django application designed to manage funeral welfare services for the Ananas community.
 
-Features
+**Features**
 
-    Member Management:
-        Register new members
-        Update member information
-        Track member contributions
-    Case Management:
-        Create and track funeral cases
-        Associate contributions with specific cases
-        Monitor case progress
-    Reporting:
-        Generate reports on member contributions by date range, member type, etc.
-        View case details and associated contributions
+* **Member Management:**
+    * Register new members
+    * Update member information
+    * Track member contributions
+* **Case Management:**
+    * Create and track funeral cases
+    * Associate contributions with specific cases
+    * Monitor case progress
+* **Reporting:**
+    * Generate reports on member contributions:
+        * By date range
+        * By member type
+        * etc.
+    * View case details and associated contributions
 
-Installation
 
-    Prerequisites:
-        Python 3.x (https://www.python.org/downloads/)
-        pip (usually included with Python installation)
+**Installation**
 
-    Clone the Repository:
-    Bash
+1. **Prerequisites:**
+    * Python 3.x ([https://www.python.org/downloads/](https://www.python.org/downloads/))
+    * pip (usually included with Python installation)
 
-    git clone https://github.com/your-username/ananas-funeral-welfare-system.git
+2. **Clone the Repository:**
 
-    Use code with caution.
+   ```bash
+   git clone https://github.com/Gitauwairimu/ananas.git
 
-Create a Virtual Environment (Recommended):
+
+
+3. **Create a Virtual Environment (Recommended)::**
 
 A virtual environment isolates project dependencies, preventing conflicts with system-wide packages. Here's an example using venv:
 Bash
