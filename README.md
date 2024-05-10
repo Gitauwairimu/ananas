@@ -50,7 +50,8 @@ Use code with caution.
 Install Dependencies:
 Bash
 
-pip install -r requirements.txt
+
+    pip install -r requirements.txt
 
 Use code with caution.
 
@@ -58,6 +59,7 @@ Configure Local Settings:
 
 Copy the example settings file and modify it with your database credentials and other environment-specific configurations:
 Bash
+
 
 cp settings.example.py local_settings.py
 
@@ -68,14 +70,15 @@ Important: Never commit local_settings.py to version control.
 Database Migrations:
 Bash
 
-python manage.py migrate
+    python manage.py migrate
 
 Use code with caution.
 
 Run Development Server (Optional):
 Bash
 
-python manage.py runserver
+
+    python manage.py runserver
 
 Use code with caution.
 
