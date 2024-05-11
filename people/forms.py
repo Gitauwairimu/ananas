@@ -62,12 +62,15 @@ from .models import Case, Member
 
 from django import forms
 from django.contrib.auth.models import User
+from django.forms import DateInput, ModelForm
 
 class MembershipForm(forms.ModelForm):
     username = forms.CharField(label="Username", required=True)
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput, required=True)
     password2 = forms.CharField(label="Confirm Password", widget=forms.PasswordInput, required=True)
-
+    
+    dob = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
+    
     class Meta:
         model = Member  # Assuming your model is Member
         fields = ['username', 'password1', 'password2', 'first_name', 'other_name', 'last_name', 'id_number', 'dob', 'gender', 'phone_number', 'next_of_kin', 'next_of_kin_contact', 'address', 'email', 'passport_photo',]
@@ -103,11 +106,16 @@ class MemberUpdateForm(forms.ModelForm):
         fields = ('__all__')
 
 
+
 class CaseForm(forms.ModelForm):
+    date_of_death = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
+    contribution_window_start = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
+    contribution_window_end = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
     class Meta:
         model = Case
         fields = ['deceased_name', 'date_of_death', 'contribution_window_start', 'contribution_window_end', 'membership_number']
         # widgets = {'deceased_name': forms.ModelChoiceField(queryset=Member.objects.all())}
+        # date_of_death = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
 
         # fields = ['deceased_name', 'date_of_death', 'membership_number', 'contribution_window_start', 'contribution_window_end']
         # fields = '__all__'
