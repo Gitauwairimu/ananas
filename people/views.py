@@ -1044,10 +1044,8 @@ from decouple import config
 
 import os
 import africastalking as at
-# username = os.getenv("gitauwairimu")
-# api_key = os.getenv("1b237ffc258b300bca1f0a7e8c309e4916c8b4a5590b832c57f7564062417575")
-username = ("gitauwairimu")
-api_key = ("1b237ffc258b300bca1f0a7e8c309e4916c8b4a5590b832c57f7564062417575")
+username = config('africastalking_username')
+api_key = config('africastalking_api_key')
 at.initialize(username, api_key)
 sms = at.SMS
 
@@ -1064,7 +1062,7 @@ def send_messages(request, case):
         lesson = "Sample Lesson"
         lesson_date = "Friday 12 March at 8.00 am "
         # message = f"hey {name}  Kindly note {lesson} lecture is scheduled on {lesson_date}"
-        message = f"Hello New Ananas Welfare member. Member #{case.membership_number}  lost a dependant. Pls send Case #{case} contribution of KES {case.set_contribution_amount} to {case.mpesa_number} by {case.contribution_window_end}."
+        message = f"New Ananas Welfare member #{case.membership_number}  lost a dependant. Pls send Case #{case} contribution of KES {case.set_contribution_amount} to {case.mpesa_number} by {case.contribution_window_end}."
         # use if conditional to customise msg for members and dependents
         try:
             response = sms.send(message, [number])
