@@ -269,11 +269,14 @@ def payment_history(request, membership_number):
     #     return context
 
 # unpaid_members = Member.objects.filter(Q(payment_set__status='UNPAID')).distinct()
+
+
 def make_payment(request):
     if request.method == 'POST':
-        print(request.user)
         form = PaymentForm(request.POST)
         if form.is_valid():
+            case_number = request.POST['case_number']
+            case = Case.objects.get(case_number=case_number)
             payment = form.save(commit=False)  # Don't commit save yet
             member = payment.member
             payment.receiver = request.user
@@ -281,33 +284,70 @@ def make_payment(request):
             # Get total penalties for the member
             total_penalties = member.total_penalties
 
+            payments = Payment.objects.filter(case_number=case, member=member)
+            has_payments = payments.exists()
+
+            # has_payments = payments.filter(case_number=case, member=member).exists()
+
             if total_penalties == 0.00:
+                print('total penalties greater than zero')
                 # Deduct penalties from payment amount
                 payment.amount = payment.amount
-                # member.total_penalties = case.set_contribution_amount - payment.amount  # Reset total penalties
-                payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
-                for payment in payments:
-                  payment.status='PAID'
-                  payment.save()
+                member.total_penalties = case.set_contribution_amount - payment.amount  # Reset total penalties
+                # payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
+                # for payment in payments:
+                #   payment.status='PAID'
+                #   payment.save()
+                payment.save()
+
+            elif total_penalties <= payment.amount:
+                if has_payments:
+                  print('total penalties lesser than paid amount')
+                  print('Case payments exist')
+                # Deduct penalties from payment amount
+                  total_penalties = max(total_penalties - payment.amount, 0)
+                  payment.amount = payment.amount - total_penalties
+                  member.total_penalties = total_penalties  # Reset total penalties
+                else:
+                   print('total penalties lesser than paid amount')
+                   print('Case payments dont exist')
+                   penalties = case.set_contribution_amount + total_penalties
+                   if payment.amount >= penalties:
+                      print('paid amount more than total penalties plus set case contribution')
+                      total_penalties = (case.set_contribution_amount + total_penalties) - payment.amount
+                      payment.amount = payment.amount - penalties
+                      member.total_penalties = total_penalties
+                      member.penalized = 'NOT_PENALIZED'
+                      payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
+                      for payment in payments:
+                        payment.status='PAID'
+                        payment.save()
+                   elif payment.amount < penalties:
+                      print('paid amount lesser than total penalties plus set case contribution')
+                      total_penalties = penalties - payment.amount
+                      payment.amount = payment.amount - case.set_contribution_amount
+                      member.total_penalties = total_penalties
+
 
             elif total_penalties >= payment.amount:
+                print('total penalties more or equal to paid amount')
                 # Deduct penalties from payment amount
                 total_penalties = max(total_penalties - payment.amount, 0)
-                # payment.amount = 0
+                payment.amount = 0
                 member.total_penalties = total_penalties  # Reset total penalties
 
-            elif total_penalties < payment.amount:
-                # Deduct penalties from payment amount
-                payment.amount = max(payment.amount - total_penalties, 0)
-                member.total_penalties = 0  # Reset total penalties
-                # Payment.objects.filter(payer=member.membership_number).update(status='PAID')
-                member.penalized = 'NOT_PENALIZED'
-                # Update status of all member payments to 'PAID'
-                # member.payment_set.update(status='PAID')
-                payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
-                for payment in payments:
-                  payment.status='PAID'
-                  payment.save()
+            # elif total_penalties < payment.amount:
+            #     # Deduct penalties from payment amount
+            #     payment.amount = max(payment.amount - total_penalties, 0)
+            #     member.total_penalties = 0  # Reset total penalties
+            #     # Payment.objects.filter(payer=member.membership_number).update(status='PAID')
+            #     member.penalized = 'NOT_PENALIZED'
+            #     # Update status of all member payments to 'PAID'
+            #     # member.payment_set.update(status='PAID')
+            #     payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
+            #     for payment in payments:
+            #       payment.status='PAID'
+            #       payment.save()
 
             # update total_paid_for_case
 
@@ -339,25 +379,77 @@ def make_payment(request):
 
 
 # def make_payment(request):
-#   if request.method == 'POST':
-#     form = PaymentForm(request.POST)
-#     if form.is_valid():
-#       payment = form.save()  # Save the payment data
+#     if request.method == 'POST':
+#         print(request.user)
+#         form = PaymentForm(request.POST)
+#         if form.is_valid():
+#             case = Case.objects.get(case_number=case)
+#             payment = form.save(commit=False)  # Don't commit save yet
+#             member = payment.member
+#             payment.receiver = request.user
 
-#       # Update account balance based on payment method
-#       payment_method = payment.payment_method
-#       account = get_or_create_account_for_payment_method(payment_method)
+#             # Get total penalties for the member
+#             total_penalties = member.total_penalties
 
-#       update_account_balance(account, payment.amount)
+#             print(case)
 
-#       messages.success(request, f'Payment Successful')
-#       return redirect('payments_list', case_number=payment.case_number)
-#       # return redirect('payment_success_url')
-#   else:
-#     # Handle GET request (same as before)
-#     # ...
-#     form = PaymentForm()
-#   return render(request, 'pesa/make_payment.html', {'form': form})
+#             if total_penalties == 0.00:
+#                 # Deduct penalties from payment amount
+#                 payment.amount = payment.amount
+#                 member.total_penalties = case.set_contribution_amount - payment.amount  # Reset total penalties
+#                 # payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
+#                 # for payment in payments:
+#                 #   payment.status='PAID'
+#                 #   payment.save()
+#                 payment.save()
+
+#             elif total_penalties >= payment.amount:
+#                 # Deduct penalties from payment amount
+#                 total_penalties = max(total_penalties - payment.amount, 0)
+#                 # payment.amount = 0
+#                 member.total_penalties = total_penalties  # Reset total penalties
+
+#             elif total_penalties < payment.amount:
+#                 # Deduct penalties from payment amount
+#                 payment.amount = max(payment.amount - total_penalties, 0)
+#                 member.total_penalties = 0  # Reset total penalties
+#                 # Payment.objects.filter(payer=member.membership_number).update(status='PAID')
+#                 member.penalized = 'NOT_PENALIZED'
+#                 # Update status of all member payments to 'PAID'
+#                 # member.payment_set.update(status='PAID')
+#                 payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
+#                 for payment in payments:
+#                   payment.status='PAID'
+#                   payment.save()
+
+#             # update total_paid_for_case
+
+#             # Update member record (optional, could update in save method)
+#             member.save()
+
+#             # Save payment (now with potential penalty deduction)
+#             payment.save()
+#             # Update account balance based on payment method
+#             payment_method = payment.payment_method
+#             account = get_or_create_account_for_payment_method(payment_method)
+
+#             update_account_balance(account, payment.amount)
+            
+
+#             # Update account balance based on payment method (if applicable)
+#             # ... (your existing logic for account balance update)
+
+#             messages.success(request, f'Payment Successful')
+#             return redirect('payments_list', case_number=payment.case_number)
+#         else:
+#             messages.error(request, f'Payment form invalid: {form.errors}')
+#     else:
+#         # Handle GET request (same as before)
+#         # ...
+#         form = PaymentForm()
+#     return render(request, 'pesa/make_payment.html', {'form': form})
+
+
 
 def get_or_create_account_for_payment_method(payment_method):
   # Implement logic to get or create an account based on payment_method
