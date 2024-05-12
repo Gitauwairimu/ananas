@@ -190,7 +190,7 @@ def payments_list(request, case_number):
   case = Case.objects.get(pk=case_number)
   # members = Member.objects.all()  # Retrieve all members
   # members = Member.objects.filter(Q(join_date__gt=case.contribution_window_start) & ~Q(status='DECEASED'))
-  members = Member.objects.filter(Q(join_date__lt=case.contribution_window_start) & ~Q(status='DECEASED'))
+  members = Member.objects.filter(Q(join_date__gt=case.contribution_window_start) & ~Q(status='DECEASED'))
   case_payments = {}  # Dictionary to store total_paid_for_case per member
 
   for member in members:
@@ -284,7 +284,7 @@ def make_payment(request):
             if total_penalties == 0.00:
                 # Deduct penalties from payment amount
                 payment.amount = payment.amount
-                # member.total_penalties = 0  # Reset total penalties
+                # member.total_penalties = case.set_contribution_amount - payment.amount  # Reset total penalties
                 payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
                 for payment in payments:
                   payment.status='PAID'
@@ -293,7 +293,7 @@ def make_payment(request):
             elif total_penalties >= payment.amount:
                 # Deduct penalties from payment amount
                 total_penalties = max(total_penalties - payment.amount, 0)
-                payment.amount = 0
+                # payment.amount = 0
                 member.total_penalties = total_penalties  # Reset total penalties
 
             elif total_penalties < payment.amount:
