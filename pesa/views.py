@@ -284,7 +284,7 @@ def make_payment(request):
             if total_penalties == 0.00:
                 # Deduct penalties from payment amount
                 payment.amount = payment.amount
-                member.total_penalties = 0  # Reset total penalties
+                # member.total_penalties = 0  # Reset total penalties
                 payments = Payment.objects.filter(member=member, status='PARTIALLY_PAID')
                 for payment in payments:
                   payment.status='PAID'

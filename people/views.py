@@ -1102,7 +1102,7 @@ def create_case(request):
             case.save()
 
             # Send SMS notification (replace with your actual SMS function)
-            send_messages(request, case)
+            # send_messages(request, case)
             messages.success(request, "Case successfully created.")
                 
             return redirect('case_list')  # Redirect to case list
