@@ -180,113 +180,90 @@ def generate_case_contribution_report(case):
 
 
 
-def penalty_apply(case):
-    # if date.today() > case.contribution_window_end and case.run_penalties == 'penalties_not_run':
-    if date.today() > case.contribution_window_end and case.run_penalties == 'penalties_not_run':
-        # Retrieve all payments for the case
-        # payments = Payment.objects.filter(case_number=case)
-        payments = Payment.objects.filter(case_number=case, status='PAID')
+# def penalty_apply(case):
+#     # if date.today() > case.contribution_window_end and case.run_penalties == 'penalties_not_run':
+#     if date.today() > case.contribution_window_end and case.run_penalties == 'penalties_not_run':
+#         # Retrieve all payments for the case
+#         # payments = Payment.objects.filter(case_number=case)
+#         payments = Payment.objects.filter(case_number=case, status='PAID')
 
-        # if contribution.total_paid_for_case >= contributions.set_contribution_amount:
-        #   pass
+#         # if contribution.total_paid_for_case >= contributions.set_contribution_amount:
+#         #   pass
 
-        # Get a list of member IDs who have made payments
-        # paid_member_ids = payments.values_list('member__id', flat=True)
-        paid_member_ids = payments.values_list('member_id', flat=True)
+#         # Get a list of member IDs who have made payments
+#         # paid_member_ids = payments.values_list('member__id', flat=True)
+#         paid_member_ids = payments.values_list('member_id', flat=True)
 
-        # Filter members who haven't paid (excluding those with payments)
-        unpaid_members = Member.objects.filter(~Q(membership_number__in=paid_member_ids),~Q(status='DECEASED'))
+#         # Filter members who haven't paid (excluding those with payments)
+#         unpaid_members = Member.objects.filter(~Q(membership_number__in=paid_member_ids),~Q(status='DECEASED'))
 
-        # Update status of unpaid members
-        unpaid_members.update(penalized='PENALIZED')
+#         # Update status of unpaid members
+#         unpaid_members.update(penalized='PENALIZED')
 
-        # Update run_penalties field directly on the queryset (if applicable)
-        Case.objects.filter(pk=case.pk).update(run_penalties='run_penalties')
+#         # Update run_penalties field directly on the queryset (if applicable)
+#         Case.objects.filter(pk=case.pk).update(run_penalties='run_penalties')
 
-        return unpaid_members
-    else:
-      print("Case doesn't meet requirements")
+#         return unpaid_members
+#     else:
+#       print("Case doesn't meet requirements")
 
 
       
 
-def penalty_create(case):
-# def penalty_create():
-    # case = Case.objects.get(pk=case_pk)
-    # case = Case.objects.last()
-    if date.today() > case.contribution_window_end and case.run_penalties == 'penalties_not_run':
+# def penalty_create(case):
+# # def penalty_create():
+#     # case = Case.objects.get(pk=case_pk)
+#     # case = Case.objects.last()
+#     if date.today() > case.contribution_window_end and case.run_penalties == 'penalties_not_run':
         
-        alive_members = Member.objects.filter(
-            Q(join_date__lt=case.contribution_window_start) &
-            ~Q(status='DECEASED') &
-            Q(dependent='NOT DEPENDENT')  # Filter for non-dependent members
-        )
+#         alive_members = Member.objects.filter(
+#             Q(join_date__lt=case.contribution_window_start) &
+#             ~Q(status='DECEASED') &
+#             Q(dependent='NOT DEPENDENT')  # Filter for non-dependent members
+#         )
 
-        for member in alive_members:
-            total_expected_contribution = case.set_contribution_amount  # Assuming a field in Case
+#         for member in alive_members:
+#             total_expected_contribution = case.set_contribution_amount  # Assuming a field in Case
             
-            # Calculate total paid by the member for this case (replace with appropriate logic)
-            # total_paid = Payment.objects.filter(case=case, member=member).aggregate(sum_=Sum('amount'))['sum_'] or 0
-            total_paid = Payment.objects.filter(member=member, case_number=case).aggregate(total_contributed=Sum('amount'))
-            # total_paid = Payment.objects.filter(member=member, case_number=case, status='PAID').aggregate(total_contributed=Sum('amount'))
-            total_amount_paid = total_paid['total_contributed']
-            # total_paid = Payment.objects.filter(case=case, member=membership_number).aggregate(sum_=Sum('amount'))['sum_'] or 0
+#             # Calculate total paid by the member for this case (replace with appropriate logic)
+#             # total_paid = Payment.objects.filter(case=case, member=member).aggregate(sum_=Sum('amount'))['sum_'] or 0
+#             total_paid = Payment.objects.filter(member=member, case_number=case).aggregate(total_contributed=Sum('amount'))
+#             # total_paid = Payment.objects.filter(member=member, case_number=case, status='PAID').aggregate(total_contributed=Sum('amount'))
+#             total_amount_paid = total_paid['total_contributed']
+#             # total_paid = Payment.objects.filter(case=case, member=membership_number).aggregate(sum_=Sum('amount'))['sum_'] or 0
 
-            if total_amount_paid is not None:
-              if total_amount_paid < total_expected_contribution:
-                penalty_amount = total_expected_contribution - total_amount_paid
-                Penalty.objects.create(member=member, case=case, amount=penalty_amount, description="Late contribution fee")
-                member.total_penalties += penalty_amount
-                member.save()
-                print('Full Calculated Penalties')
-                # penalty_apply(case)  # Call the penalty_apply function if needed
-              elif total_amount_paid >= total_expected_contribution:
-                print('No penalties created')
-              # else total_amount_paid >= total_expected_contribution: # Overpayment shouldn't be allowed
-            else:
-              penalty_amount = total_expected_contribution
-              Penalty.objects.create(member=member, case=case, amount=penalty_amount, description="Late contribution fee")
-              member.total_penalties += penalty_amount
-              member.save()
-              print('Full penalties')
-            #           # Handle the case where total_amount_paid is None (e.g., log a message, create a placeholder penalty, etc.)
-
-
-            # if total_expected_contribution > total_amount_paid:
-            #     penalty_amount = total_expected_contribution - total_amount_paid
-            #     penalty = Penalty.objects.create(member=member, case=case, amount=penalty_amount, description="Late contribution fee")
-            #     # penalty_apply(case)  # Call the penalty_apply function if needed
-            #     print('Success')
-        Case.objects.filter(pk=case.pk).update(run_penalties='run_penalties', status='INACTIVE')
-        # Case.objects.filter(pk=case.pk).update(status='INACTIVE')
-        # Update case status to INACTIVE after penalties are applied
-
-        print('Run Penalties Done. Case marked as INACTIVE.')
-    else:
-      print('Unsuccessful')
-
-        # ... (consider redirect or other actions after processing all members) ...
+#             if total_amount_paid is not None:
+#               if total_amount_paid < total_expected_contribution:
+#                 penalty_amount = total_expected_contribution - total_amount_paid
+#                 Penalty.objects.create(member=member, case=case, amount=penalty_amount, description="Late contribution fee")
+#                 member.total_penalties += penalty_amount
+#                 member.save()
+#                 print('Full Calculated Penalties')
+#                 # penalty_apply(case)  # Call the penalty_apply function if needed
+#               elif total_amount_paid >= total_expected_contribution:
+#                 print('No penalties created')
+#               # else total_amount_paid >= total_expected_contribution: # Overpayment shouldn't be allowed
+#             else:
+#               penalty_amount = total_expected_contribution
+#               Penalty.objects.create(member=member, case=case, amount=penalty_amount, description="Late contribution fee")
+#               member.total_penalties += penalty_amount
+#               member.save()
+#               print('Full penalties')
+#             #           # Handle the case where total_amount_paid is None (e.g., log a message, create a placeholder penalty, etc.)
 
 
-# from django.db.models import F
-# penalized_members = Member.objects.filter(status='PENALIZED').select_related('member_cases')  # Retrieve cases in one query
+#             # if total_expected_contribution > total_amount_paid:
+#             #     penalty_amount = total_expected_contribution - total_amount_paid
+#             #     penalty = Penalty.objects.create(member=member, case=case, amount=penalty_amount, description="Late contribution fee")
+#             #     # penalty_apply(case)  # Call the penalty_apply function if needed
+#             #     print('Success')
+#         Case.objects.filter(pk=case.pk).update(run_penalties='run_penalties', status='INACTIVE')
+#         # Case.objects.filter(pk=case.pk).update(status='INACTIVE')
+#         # Update case status to INACTIVE after penalties are applied
 
-# Alternatively, if you need more data from the Case model:
-# penalized_members = Member.objects.filter(status='PENALIZED')
-# cases = Case.objects.filter(membership_number__in=penalized_members)
-
-
-# penalized_members = Member.objects.filter(penalized='PENALIZED')
-# cases = Case.objects.filter(membership_number__in=penalized_members)
-# for member in penalized_members:
-#     case = member.member_cases  # Assuming each member has only one relevant case
-    
-#     # Assuming a 'set_contribution_amount' field in the Case model:
-#     penalty_amount = case.set_contribution_amount - member.total_contributions  # Replace 'total_contributions' with the appropriate field for contributed amount
-
-#     # Set the penalty amount
-#     case.penalty_amount = penalty_amount
-#     case.save()
+#         print('Run Penalties Done. Case marked as INACTIVE.')
+#     else:
+#       print('Unsuccessful')
 
 
         # {% for penalty in penalized_member.penalties.all %}
@@ -388,15 +365,12 @@ def case_contribution_report(request, case_pk):
 #   total_members = eligible_members.count() # define eligible members as those whose join_date is earlier than date of start of contributions, and they dont die during the period between opening of case and closing of the case
   report_data = generate_case_contribution_report(case)
   context = {'report_data': report_data, 'accounts': accounts, 'cheque_total': cheque_total, 'mpesa_total': mpesa_total, 'cash_total': cash_total, 'contributions_total': contributions_total, 'case':case, 'total_members': total_members, 'unpaid_members': unpaid_members}
+  
   # penalty_apply(case)
-  penalty_create(case)
-  # penalty_create()
-#   get_last_created_case()
-#   case.update(run_penalties='run_penalties')
-#   case.run_penalties = 'run_penalties'
-#   case.save()
-  # member = Member.objects.filter(pk=membership_number)
-  # penalty_create(case, member)
+
+  # penalty_create(case)
+  
+
   return render(request, 'people/case_contribution_report.html', context)
 
 
